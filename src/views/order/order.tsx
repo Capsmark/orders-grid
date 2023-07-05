@@ -1,3 +1,4 @@
+import RangeSelector from '@/components/range-selector';
 import ToggleSwitch from '@/components/toggle-switch';
 import useGridStore from '@/stores/grid-store';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
@@ -83,126 +84,146 @@ export const Order: FC = () => {
   }, [orders]);
 
   return (
-    <div className='p-6 grid-container'>
-      <div className='p-4 flex flex-col justify-start items-start'>
-        <section className='flex flex-row justify-center items-center mb-2 gap-2'>
-          <label htmlFor='quantity' className='block text-white-700 mb-2'>
-            Grid Quantity:
-          </label>
+    <div className='p-6 h-full w-full flex flex-col grid-container'>
+      <div className='flex flex-row justify-between items-center self-start'>
+        <section className='flex flex-row justify-center items-center gap-12'>
+          <div className='flex flex-col justify-center items-center gap-3 self-baseline'>
+            <div className='flex flex-row justify-center items-center gap-3 '>
+              <label htmlFor='quantity' className='block text-white-700 mb-2'>
+                Grid Quantity:
+              </label>
 
-          <input
-            type='number'
-            id='quantity'
-            value={quantity}
-            onChange={onQuantityChange}
-            className='border border-white-300 rounded text-center py-2 mb-2 w-16'
-          />
+              <input
+                type='number'
+                id='quantity'
+                value={quantity}
+                onChange={onQuantityChange}
+                className='border border-white-300 rounded text-center py-2 mb-2 w-16'
+              />
+            </div>
 
-          <label htmlFor='quantity' className='block text-white-700 ml-12 mb-2'>
-            Amount :
-          </label>
+            <section className='flex flex-row justify-start align-middle p-4  gap-2'>
+              <p className='text-center mr-3 mt-1'>
+                TP/SL: {isPercent ? 'Percentage' : 'Numerical'}
+              </p>
+              <ToggleSwitch
+                activeColorClass='bg-blue-500'
+                defaultColorClass='bg-gray-500'
+                state={isPercent}
+                onChange={setPercent}
+              />{' '}
+            </section>
+          </div>
 
-          <input
-            type='number'
-            id='amount'
-            value={amount}
-            onChange={onAmountChange}
-            className='border border-white-300 rounded  text-center px-3 py-2 mb-2 w-36'
-          />
+          <section
+            className={`flex flex-col justify-center items-center gap-4 ${
+              !!boundaries?.length && !Number.isNaN(totalAverage) ? 'self-baseline' : ''
+            }`}
+          >
+            <div className='flex flex-row justify-center items-center gap-2'>
+              <label htmlFor='range' className='block h-full text-white-700 text-center'>
+                Range :
+              </label>
 
-          {!!quantity && !Number.isNaN(quantity) && (
-            <p className='inline-block pl-4'>{`${new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-            }).format(amount / quantity)} each`}</p>
-          )}
-        </section>
+              <input
+                type='number'
+                id='range'
+                placeholder='From'
+                value={startingRange ?? ''}
+                onChange={onStartingRangeChange}
+                className='border border-white-300 rounded px-3 py-2 w-32 text-center'
+              />
 
-        <section className='flex flex-row justify-center items-center mb-2 gap-2'>
-          <label htmlFor='range' className='block h-full text-white-700 text-center'>
-            Range :
-          </label>
+              <p className='h-full'> - </p>
 
-          <input
-            type='number'
-            id='range'
-            placeholder='From'
-            value={startingRange ?? ''}
-            onChange={onStartingRangeChange}
-            className='border border-white-300 rounded px-3 py-2 w-32 text-center'
-          />
+              <input
+                type='number'
+                id='second_range'
+                placeholder='To'
+                value={endingRange ?? ''}
+                onChange={onEndingRangeChange}
+                className='border border-white-300 rounded px-3 py-2  w-32 text-center'
+              />
+            </div>
 
-          <p className='h-full'> - </p>
-
-          <input
-            type='number'
-            id='second_range'
-            placeholder='To'
-            value={endingRange ?? ''}
-            onChange={onEndingRangeChange}
-            className='border border-white-300 rounded px-3 py-2  w-32 text-center'
-          />
-
-          {boundaries?.length && (
-            <p className='ml-10'>
-              Boundaries:{' ['}
-              {boundaries.map(
-                (b, index) => `${b}${index + 1 === boundaries.length ? '' : ', '}`,
+            <div className='flex flex-col justify-center align-middle gap-3 ml-16'>
+              {!!boundaries?.length && (
+                <p id='boundaries' className='text-center'>
+                  Boundaries:{' ['}
+                  {boundaries.map(
+                    (b, index) => `${b}${index + 1 === boundaries.length ? '' : ', '}`,
+                  )}
+                  {']'}
+                </p>
               )}
-              {']'}
-            </p>
-          )}
 
-          {!Number.isNaN(totalAverage) && (
-            <p className='inline-block pl-4'>Average: {totalAverage}</p>
-          )}
+              {!Number.isNaN(totalAverage) && (
+                <p className='inline-block text-center'>Average: {totalAverage}</p>
+              )}
+            </div>
+          </section>
+
+          <div className='flex flex-col justify-center items-center gap-8'>
+            <section className='flex flex-row justify-center items-center gap-2'>
+              <label htmlFor='quantity' className='block text-white-700'>
+                Amount :
+              </label>
+
+              <input
+                type='number'
+                id='amount'
+                value={amount}
+                onChange={onAmountChange}
+                className='border border-white-300 rounded  text-center px-3 py-2 w-36'
+              />
+
+              {!!quantity && !Number.isNaN(quantity) && (
+                <p className='inline-block'>{`${new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                }).format(amount / quantity)} each`}</p>
+              )}
+            </section>
+
+            <div className='mr-1'>
+              <RangeSelector />
+            </div>
+          </div>
         </section>
       </div>
 
-      <section className='flex flex-row justify-start align-middle p-4  gap-2'>
-        <p className='text-center mr-3 mt-1'>
-          TP/SL Input type: {isPercent ? 'Percentage' : 'Numerical'}
-        </p>
-        <ToggleSwitch
-          activeColorClass='bg-blue-500'
-          defaultColorClass='bg-gray-500'
-          state={isPercent}
-          onChange={setPercent}
-        />{' '}
-      </section>
-
-      {quantity > 0 && (
-        <div className='flex flex-row'>
-          {boundaries.map((boundary, index) => (
-            <OrderForm
-              key={index}
-              index={index}
-              isPercent={isPercent}
-              isInvalid={quantity <= 0}
-              boundary={boundary}
-              isSale={isSell}
-            />
-          ))}
-        </div>
-      )}
-
-      <section className='flex flex-row items-center justify-start p-4 gap-4'>
-        <button
-          type='submit'
-          className={`${
-            !isSell ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-          }  text-white font-bold py-2 px-4 rounded`}
-        >
-          {isSell ? 'Sell' : 'Buy'}
-        </button>
-
-        <ToggleSwitch state={isSell} onChange={setSell} />
-
-        <div className='flex flex-row justify-center items-center gap-4 pl-4'>
-          <div className='h-full flex flex-row justify-center align-middle'>
-            <p>Over All:</p>
+      <div>
+        {quantity > 0 && (
+          <div className='flex flex-row'>
+            {boundaries.map((boundary, index) => (
+              <OrderForm
+                key={index}
+                index={index}
+                isPercent={isPercent}
+                isInvalid={quantity <= 0}
+                boundary={boundary}
+                isSale={isSell}
+              />
+            ))}
           </div>
+        )}
+      </div>
 
+      <section className='flex flex-row items-center justify-around p-4 gap-4'>
+        <div className='flex flex-row items-center justify-center gap-2'>
+          <ToggleSwitch state={isSell} onChange={setSell} />
+
+          <button
+            type='submit'
+            className={`${
+              !isSell ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+            }  text-white font-bold py-2 px-4 rounded`}
+          >
+            {isSell ? 'Sell' : 'Buy'}
+          </button>
+        </div>
+
+        <div className='flex flex-row justify-center items-center gap-4'>
           <div>
             <p className={'text-green-500 hover:text-green-600 font-bold py-1 px-2'}>
               Profit: {(totalProfitPercent * amount) / quantity / 100}$

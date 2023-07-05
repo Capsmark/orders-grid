@@ -57,6 +57,10 @@ export const OrderForm: React.FC<{
   // Sets the Percent or Number of TP
   useEffect(() => {
     if (isPercent) {
+      if (tp === '') {
+        return;
+      }
+
       const tpVal = isSell
         ? calculateLossValue(+tp, boundary)
         : calculateProfitValue(+tp, boundary);
