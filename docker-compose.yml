@@ -4,11 +4,11 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    container_name: app_next_grid_bot
+    container_name: app_next_orders_grid
     ports:
       - '3000:3000'
     volumes:
-      - ./:/grid.app
+      - ./:/app_next_orders_grid
     networks:
       - shared-net
 
