@@ -36,7 +36,9 @@ export const Balance = () => {
         <div className='bg-gray-800 rounded-lg p-10 w-150'>
           <h1 className='text-5xl font-extrabold mb-6 text-center'>Total Balance:</h1>
           <div className='bg-white text-gray-900 rounded-lg p-4'>
-            <span className='text-4xl font-bold text-center'>${tBalance.toFixed(2)}</span>
+            <span className='text-4xl font-bold text-center'>
+              ${Number(tBalance).toFixed(2)}
+            </span>
           </div>
         </div>
 
@@ -45,7 +47,9 @@ export const Balance = () => {
             Unrealized Balance:
           </h2>
           <div className='bg-white text-gray-900 rounded-lg p-4'>
-            <span className='text-4xl font-bold text-center'>${equityS.toFixed(2)}</span>
+            <span className='text-4xl font-bold text-center'>
+              ${Number(equityS).toFixed(2)}
+            </span>
           </div>
         </div>
 
@@ -54,7 +58,9 @@ export const Balance = () => {
             Available to withdraw:
           </h2>
           <div className='bg-white text-gray-900 rounded-lg p-4'>
-            <span className='text-4xl font-bold text-center'>${atw.toFixed(2)}</span>
+            <span className='text-4xl font-bold text-center'>
+              ${Number(atw).toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
@@ -62,7 +68,9 @@ export const Balance = () => {
         <div className='bg-gray-800 rounded-lg p-10 w-150'>
           <h2 className='text-5xl font-extrabold mb-6 text-center'>BTC:</h2>
           <div className='bg-white text-gray-900 rounded-lg p-4'>
-            <span className='text-4xl font-bold text-center'>${BTC.toFixed(0)}</span>
+            <span className='text-4xl font-bold text-center'>
+              ${Number(BTC).toFixed(0)}
+            </span>
           </div>
         </div>
       </div>

@@ -1,0 +1,17 @@
+version: '3.2'
+services:
+  app-next:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: app_next_grid_bot
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/grid.app
+    networks:
+      - shared-net
+
+networks:
+  shared-net:
+    driver: bridge

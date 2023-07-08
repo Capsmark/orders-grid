@@ -3,6 +3,7 @@ import ToggleSwitch from '@/components/toggle-switch';
 import { TradeOrder, placeOrders } from '@/pages/api/bybit';
 import useGridStore from '@/stores/grid-store';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
+// import '../../app/globals.css';
 import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
