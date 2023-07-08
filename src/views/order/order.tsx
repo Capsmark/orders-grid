@@ -4,6 +4,7 @@ import useGridStore from '@/stores/grid-store';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 // import '../../app/globals.css';
 import { TradeOrder, placeOrders } from '@/pages/api/bybit';
+import useRangeSelectorStore from '@/stores/range-selector.store';
 import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
@@ -14,18 +15,14 @@ export const Order: FC = () => {
   const orderType = 'Limit';
 
   const { orders, setOrders } = useGridStore();
+  const { amount, quantity, setQuantity, setAmount } = useRangeSelectorStore();
 
   const [isSell, setSell] = useState<boolean>(true);
-  const [quantity, setQuantity] = useState(1);
-  const [amount, setAmount] = useState(0);
   const [isPercent, setPercent] = useState<boolean>(false);
 
   const [totalAverage, setTotalAverage] = useState<number>();
 
-  const [totalLoss, setTotalLoss] = useState<number>(0);
   const [totalLossPercent, setTotalLossPercent] = useState<number>(0);
-
-  const [totalProfit, setTotalProfit] = useState<number>(0);
   const [totalProfitPercent, setTotalProfitPercent] = useState<number>(0);
 
   const [startingRange, setStartingRange] = useState<number>();
@@ -44,7 +41,11 @@ export const Order: FC = () => {
   };
 
   const onAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setAmount(+(+event.target.value).toFixed(2));
+    const newValue = +event.target.value;
+
+    setAmount(+newValue.toFixed(2));
+
+    // onChange(newValue, (100 * newValue) / amount);
   };
 
   const onStartingRangeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -72,22 +73,17 @@ export const Order: FC = () => {
   }, [amount, quantity, startingRange, endingRange, boundaries]);
 
   useEffect(() => {
-    setTotalLoss(0);
     setTotalLossPercent(0);
-    setTotalProfit(0);
     setTotalProfitPercent(0);
 
-    [...orders].forEach(([boundary, { expectedLoss, expectedProfit }]) => {
+    [...orders].forEach(([, { expectedLoss, expectedProfit }]) => {
       if (
         expectedLoss &&
         expectedProfit &&
         !Number.isNaN(expectedProfit.numeric) &&
         !Number.isNaN(expectedLoss.numeric)
       ) {
-        setTotalProfit((perv) => perv + Math.abs(boundary - expectedProfit?.numeric));
         setTotalProfitPercent((perv) => perv + +expectedProfit?.percentage.slice(0, -1));
-
-        setTotalLoss((perv) => perv + Math.abs(boundary - expectedLoss?.numeric));
         setTotalLossPercent((perv) => perv + +expectedLoss?.percentage.slice(0, -1));
       }
     });
@@ -99,7 +95,7 @@ export const Order: FC = () => {
         const orderObj = {
           category,
           symbol,
-          orderType: 'Limit',
+          orderType,
           side: isSell ? 'Sell' : 'Buy',
           qty: (amount / quantity / price).toFixed(5),
           price: price.toString(),
@@ -208,12 +204,7 @@ export const Order: FC = () => {
             </div>
           </section>
 
-          <AmountSelector
-            amount={amount}
-            setAmount={setAmount}
-            onAmountChange={onAmountChange}
-            quantity={quantity}
-          />
+          <AmountSelector />
         </section>
       </div>
 

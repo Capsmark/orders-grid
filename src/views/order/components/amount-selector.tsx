@@ -1,21 +1,18 @@
 import RangeSelector from '@/components/range-selector';
 import useExchangeStore from '@/stores/exchange-store';
-import { FC } from 'react';
+import useRangeSelectorStore from '@/stores/range-selector.store';
+import { ChangeEvent, FC, useCallback } from 'react';
 
-interface AmountProps {
-  amount: number;
-  setAmount: any;
-  onAmountChange: any;
-  quantity: number;
-}
-
-export const AmountSelector: FC<AmountProps> = ({
-  amount,
-  setAmount,
-  onAmountChange,
-  quantity,
-}) => {
+export const AmountSelector: FC = () => {
   const { availableToWithdraw } = useExchangeStore();
+  const { quantity, amount, onRangeChanges } = useRangeSelectorStore();
+
+  const onAmountChange = useCallback(
+    ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+      onRangeChanges(+value, (+value * 100) / availableToWithdraw);
+    },
+    [],
+  );
 
   return (
     <div className='flex flex-col justify-center items-center gap-8'>
@@ -32,6 +29,7 @@ export const AmountSelector: FC<AmountProps> = ({
           className='border border-white-300 rounded  text-center px-3 py-2 w-36'
         />
 
+        {/* TODO move this to a helper */}
         {!!quantity && !Number.isNaN(quantity) && (
           <p className='inline-block'>{`${new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -41,7 +39,7 @@ export const AmountSelector: FC<AmountProps> = ({
       </section>
 
       <div className='mr-1'>
-        <RangeSelector setAmount={setAmount} balance={availableToWithdraw} />
+        <RangeSelector />
       </div>
     </div>
   );

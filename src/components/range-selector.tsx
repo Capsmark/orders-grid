@@ -1,17 +1,13 @@
-import { FC, useState } from 'react';
+import useExchangeStore from '@/stores/exchange-store';
+import useRangeSelectorStore from '@/stores/range-selector.store';
+import { FC } from 'react';
 
-interface AmountRangeProps {
-  balance: number;
-  setAmount: any;
-}
+const RangeSelector: FC = () => {
+  const { availableToWithdraw } = useExchangeStore();
+  const { percentage, onRangeChanges } = useRangeSelectorStore();
 
-const RangeSelector: FC<AmountRangeProps> = ({ setAmount, balance }) => {
-  const [value, setValue] = useState<number>();
-
-  const handleChange = (e: any) => {
-    const newValue = parseInt(e.target.value);
-    setValue(newValue);
-    setAmount(+((balance * newValue) / 100).toFixed(2));
+  const onPercentageChange = ({ target: { value } }: any) => {
+    onRangeChanges(+((availableToWithdraw * +value) / 100).toFixed(2), +value);
   };
 
   return (
@@ -21,15 +17,15 @@ const RangeSelector: FC<AmountRangeProps> = ({ setAmount, balance }) => {
         min='0'
         max='100'
         step='5'
-        value={value}
-        onChange={handleChange}
+        value={percentage}
+        onChange={onPercentageChange}
         className='w-full h-2 bg-gray-200 rounded-md appearance-none focus:outline-none focus:bg-indigo-500'
       />
       <div className='flex justify-between w-full mt-2'>
         <span className='text-xs text-gray-600'>0%</span>
 
         <div className='mt-2 self-center'>
-          <span className='text-sm font-bold text-indigo-500'>{value}%</span>
+          <span className='text-sm font-bold text-indigo-500'>{percentage}%</span>
         </div>
 
         <span className='text-xs text-gray-600'>100%</span>
