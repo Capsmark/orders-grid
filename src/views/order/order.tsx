@@ -1,7 +1,9 @@
-import RangeSelector from '@/components/range-selector';
+import { BTC } from '@/components/btc';
 import ToggleSwitch from '@/components/toggle-switch';
+import { TradeOrder, placeOrders } from '@/pages/api/bybit';
 import useGridStore from '@/stores/grid-store';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
+import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
 
@@ -41,7 +43,7 @@ export const Order: FC = () => {
   };
 
   const onAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setAmount(parseInt(event.target.value));
+    setAmount(+(+event.target.value).toFixed(2));
   };
 
   const onStartingRangeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -52,10 +54,17 @@ export const Order: FC = () => {
     setEndingRange(parseInt(event.target.value));
   };
 
+  const onReset = () => {
+    setAmount(0);
+    setStartingRange(0);
+    setEndingRange(0);
+    setQuantity(1);
+  };
+
   useEffect(() => {
     setBoundaries(generateBoundaries(quantity, endingRange, startingRange));
     setOrders(new Map());
-  }, [amount, quantity, startingRange, endingRange]);
+  }, [quantity, startingRange, endingRange]);
 
   useEffect(() => {
     setTotalAverage(calculateAverage(amount, boundaries));
@@ -83,11 +92,59 @@ export const Order: FC = () => {
     });
   }, [orders]);
 
+  // const onOrderBatch = async () => {
+  //   const orderDTOs = [...orders.entries()].map(([price, { takeProfit, stopLoss }]) => {
+  //     const orderObj = {
+  //       category,
+  //       symbol,
+  //       orderType: 'Limit',
+  //       side: isSell ? 'Sell' : 'Buy',
+  //       qty: (amount / quantity / price).toFixed(5).toString(),
+  //       price: price.toString(),
+  //       stopLoss: stopLoss?.toString(),
+  //       takeProfit: takeProfit?.toString(),
+  //     } as TradeOrder;
+
+  //     return orderObj;
+  //   });
+
+  //   await placeBatchOrders(orderDTOs);
+  // };
+
+  const onNormalOrder = async () => {
+    const orderDTOs = [...orders.entries()].map(([price, { takeProfit, stopLoss }]) => {
+      const orderObj = {
+        category,
+        symbol,
+        orderType: 'Limit',
+        side: isSell ? 'Sell' : 'Buy',
+        qty: (amount / quantity / price).toFixed(5),
+        price: price.toString(),
+        stopLoss: stopLoss?.toString(),
+        takeProfit: takeProfit?.toString(),
+      } as TradeOrder;
+
+      return orderObj;
+    });
+
+    await placeOrders(orderDTOs);
+    setOrders(new Map());
+    onReset();
+  };
+
   return (
     <div className='p-6 h-full w-full flex flex-col grid-container'>
+      <div className='self-end'>
+        <BTC />
+      </div>
       <div className='flex flex-row justify-between items-center self-start'>
         <section className='flex flex-row justify-center items-center gap-12'>
-          <div className='flex flex-col justify-center items-center gap-3 self-baseline'>
+          <div className='flex flex-col justify-center items-center gap-6 self-baseline'>
+            <div className='flex flex-row gap-4'>
+              <p>Side: {isSell ? 'Sell' : 'Buy'}</p>
+              <ToggleSwitch state={isSell} onChange={setSell} />
+            </div>
+
             <div className='flex flex-row justify-center items-center gap-3 '>
               <label htmlFor='quantity' className='block text-white-700 mb-2'>
                 Grid Quantity:
@@ -158,37 +215,19 @@ export const Order: FC = () => {
               )}
 
               {!Number.isNaN(totalAverage) && (
-                <p className='inline-block text-center'>Average: {totalAverage}</p>
+                <p className='inline-block text-center'>
+                  Average: {totalAverage?.toFixed(2)}
+                </p>
               )}
             </div>
           </section>
 
-          <div className='flex flex-col justify-center items-center gap-8'>
-            <section className='flex flex-row justify-center items-center gap-2'>
-              <label htmlFor='quantity' className='block text-white-700'>
-                Amount :
-              </label>
-
-              <input
-                type='number'
-                id='amount'
-                value={amount}
-                onChange={onAmountChange}
-                className='border border-white-300 rounded  text-center px-3 py-2 w-36'
-              />
-
-              {!!quantity && !Number.isNaN(quantity) && (
-                <p className='inline-block'>{`${new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                }).format(amount / quantity)} each`}</p>
-              )}
-            </section>
-
-            <div className='mr-1'>
-              <RangeSelector />
-            </div>
-          </div>
+          <AmountSelector
+            amount={amount}
+            setAmount={setAmount}
+            onAmountChange={onAmountChange}
+            quantity={quantity}
+          />
         </section>
       </div>
 
@@ -211,13 +250,12 @@ export const Order: FC = () => {
 
       <section className='flex flex-row items-center justify-around p-4 gap-4'>
         <div className='flex flex-row items-center justify-center gap-2'>
-          <ToggleSwitch state={isSell} onChange={setSell} />
-
           <button
             type='submit'
             className={`${
               !isSell ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-            }  text-white font-bold py-2 px-4 rounded`}
+            }  text-white font-bold py-2 px-4 w-48 rounded`}
+            onClick={onNormalOrder}
           >
             {isSell ? 'Sell' : 'Buy'}
           </button>
@@ -226,17 +264,17 @@ export const Order: FC = () => {
         <div className='flex flex-row justify-center items-center gap-4'>
           <div>
             <p className={'text-green-500 hover:text-green-600 font-bold py-1 px-2'}>
-              Profit: {(totalProfitPercent * amount) / quantity / 100}$
+              Profit: {((totalProfitPercent * amount) / quantity / 100).toFixed(2)}$
             </p>
             <p className={'text-green-500 hover:text-green-600 font-bold py-1 px-2'}>
-              Profit Percent: {totalProfitPercent / quantity}%
+              Profit Percent: {(totalProfitPercent / quantity).toFixed(2)}%
             </p>
 
             <p className={'text-red-500 hover:text-red-600 font-bold py-1 px-2'}>
-              Loss: {(totalLossPercent * amount) / quantity / 100}$
+              Loss: {((totalLossPercent * amount) / quantity / 100).toFixed(2)}$
             </p>
             <p className={'text-red-500 hover:text-red-600 font-bold py-1 px-2'}>
-              Loss Percent: {totalLossPercent / quantity}%
+              Loss Percent: {(totalLossPercent / quantity).toFixed(2)}%
             </p>
           </div>
         </div>

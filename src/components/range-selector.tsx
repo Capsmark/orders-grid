@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 
-const RangeSelector = () => {
-  const [value, setValue] = useState(0);
+interface AmountRangeProps {
+  balance: number;
+  setAmount: any;
+}
+
+const RangeSelector: FC<AmountRangeProps> = ({ setAmount, balance }) => {
+  const [value, setValue] = useState<number>();
 
   const handleChange = (e: any) => {
     const newValue = parseInt(e.target.value);
     setValue(newValue);
+    setAmount(+((balance * newValue) / 100).toFixed(2));
   };
 
   return (
