@@ -1,9 +1,9 @@
 import { BTC } from '@/components/btc';
 import ToggleSwitch from '@/components/toggle-switch';
-import { TradeOrder, placeOrders } from '@/pages/api/bybit';
 import useGridStore from '@/stores/grid-store';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 // import '../../app/globals.css';
+import { TradeOrder, placeOrders } from '@/pages/api/bybit';
 import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
@@ -93,40 +93,25 @@ export const Order: FC = () => {
     });
   }, [orders]);
 
-  // const onOrderBatch = async () => {
-  //   const orderDTOs = [...orders.entries()].map(([price, { takeProfit, stopLoss }]) => {
-  //     const orderObj = {
-  //       category,
-  //       symbol,
-  //       orderType: 'Limit',
-  //       side: isSell ? 'Sell' : 'Buy',
-  //       qty: (amount / quantity / price).toFixed(5).toString(),
-  //       price: price.toString(),
-  //       stopLoss: stopLoss?.toString(),
-  //       takeProfit: takeProfit?.toString(),
-  //     } as TradeOrder;
-
-  //     return orderObj;
-  //   });
-
-  //   await placeBatchOrders(orderDTOs);
-  // };
-
   const onNormalOrder = async () => {
-    const orderDTOs = [...orders.entries()].map(([price, { takeProfit, stopLoss }]) => {
-      const orderObj = {
-        category,
-        symbol,
-        orderType: 'Limit',
-        side: isSell ? 'Sell' : 'Buy',
-        qty: (amount / quantity / price).toFixed(5),
-        price: price.toString(),
-        stopLoss: stopLoss?.toString(),
-        takeProfit: takeProfit?.toString(),
-      } as TradeOrder;
+    const orderDTOs = [...orders.entries()].map(
+      ([price, { takeProfit, stopLoss }], index) => {
+        const orderObj = {
+          category,
+          symbol,
+          orderType: 'Limit',
+          side: isSell ? 'Sell' : 'Buy',
+          qty: (amount / quantity / price).toFixed(5),
+          price: price.toString(),
+          stopLoss: stopLoss?.toString(),
+          takeProfit: takeProfit?.toString(),
+          positionIdx: isSell ? 2 : 1,
+          orderLinkId: Math.random() * 100 + 10 + 'cap-order-x1' + index,
+        } as TradeOrder;
 
-      return orderObj;
-    });
+        return orderObj;
+      },
+    );
 
     await placeOrders(orderDTOs);
     setOrders(new Map());
