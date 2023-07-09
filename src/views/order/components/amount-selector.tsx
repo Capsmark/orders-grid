@@ -1,7 +1,9 @@
+import { Dollar } from '@/components/dollor';
 import RangeSelector from '@/components/range-selector';
+import { dollarInputConverter, isNumber } from '@/helpers/converts.helper';
 import useExchangeStore from '@/stores/exchange-store';
 import useRangeSelectorStore from '@/stores/range-selector.store';
-import { ChangeEvent, FC, useCallback } from 'react';
+import { ChangeEvent, FC, useCallback, useMemo } from 'react';
 
 export const AmountSelector: FC = () => {
   const { availableToWithdraw } = useExchangeStore();
@@ -9,32 +11,47 @@ export const AmountSelector: FC = () => {
 
   const onAmountChange = useCallback(
     ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
-      onRangeChanges(+value, (+value * 100) / availableToWithdraw);
+      if (value === '$') {
+        onRangeChanges(0, 0);
+      }
+
+      const numericValue = value.replace(/,/g, '');
+      const valueWithoutCommas = value.length > 1 ? numericValue.slice(1) : numericValue;
+      const parsedValue = parseFloat(valueWithoutCommas);
+
+      if (!Number.isNaN(parsedValue)) {
+        onRangeChanges(parsedValue, (parsedValue * 100) / availableToWithdraw);
+      }
     },
     [],
   );
 
+  const formattedAmount = useMemo(() => {
+    return amount !== undefined && !Number.isNaN(amount) && amount !== 0
+      ? dollarInputConverter.format(amount)
+      : '';
+  }, [amount]);
+
   return (
-    <div className='flex flex-col justify-center items-center gap-8'>
-      <section className='flex flex-row justify-center items-center gap-2'>
+    <div className='flex flex-col items-center justify-center gap-8'>
+      <section className='flex flex-row items-center justify-center gap-2'>
         <label htmlFor='quantity' className='block text-white-700'>
           Amount :
         </label>
 
         <input
-          type='number'
+          type='text'
           id='amount'
-          value={amount}
+          value={formattedAmount}
           onChange={onAmountChange}
-          className='border border-white-300 rounded  text-center px-3 py-2 w-36'
+          className='px-3 py-2 text-center border rounded border-white-300 w-36'
         />
 
-        {/* TODO move this to a helper */}
-        {!!quantity && !Number.isNaN(quantity) && (
-          <p className='inline-block'>{`${new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(amount / quantity)} each`}</p>
+        {isNumber(quantity) && (
+          <p>
+            <Dollar amount={amount / quantity} />
+            <span> each</span>
+          </p>
         )}
       </section>
 

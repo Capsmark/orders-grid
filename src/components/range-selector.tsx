@@ -7,11 +7,15 @@ const RangeSelector: FC = () => {
   const { percentage, onRangeChanges } = useRangeSelectorStore();
 
   const onPercentageChange = ({ target: { value } }: any) => {
-    onRangeChanges(+((availableToWithdraw * +value) / 100).toFixed(2), +value);
+    const numericValue = +value.replace(/,/g, '');
+    onRangeChanges(
+      +((availableToWithdraw * numericValue) / 100).toFixed(2),
+      numericValue,
+    );
   };
 
   return (
-    <div className='w-64 flex flex-col justify-center items-start'>
+    <div className='flex flex-col items-start justify-center w-64'>
       <input
         type='range'
         min='0'
@@ -24,8 +28,10 @@ const RangeSelector: FC = () => {
       <div className='flex justify-between w-full mt-2'>
         <span className='text-xs text-gray-600'>0%</span>
 
-        <div className='mt-2 self-center'>
-          <span className='text-sm font-bold text-indigo-500'>{percentage}%</span>
+        <div className='self-center mt-2'>
+          <span className='text-sm font-bold text-indigo-500'>
+            {percentage.toFixed()}%
+          </span>
         </div>
 
         <span className='text-xs text-gray-600'>100%</span>

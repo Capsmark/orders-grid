@@ -1,10 +1,11 @@
 import { BTC } from '@/components/btc';
+import { Dollar } from '@/components/dollor';
 import ToggleSwitch from '@/components/toggle-switch';
-import useGridStore from '@/stores/grid-store';
-import { ChangeEvent, FC, useEffect, useState } from 'react';
-// import '../../app/globals.css';
+import { dollarInputConverter } from '@/helpers/converts.helper';
 import { TradeOrder, placeOrders } from '@/pages/api/bybit';
+import useGridStore from '@/stores/grid-store';
 import useRangeSelectorStore from '@/stores/range-selector.store';
+import { ChangeEvent, FC, useEffect, useMemo, useState } from 'react';
 import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
@@ -30,8 +31,8 @@ export const Order: FC = () => {
 
   const [boundaries, setBoundaries] = useState<number[]>([]);
 
-  const onQuantityChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const q = parseInt(event.target.value);
+  const onQuantityChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+    const q = +value.replace(/,/g, '');
 
     if (q < 1) {
       return;
@@ -40,21 +41,50 @@ export const Order: FC = () => {
     setQuantity(q);
   };
 
-  const onAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const newValue = +event.target.value;
+  const onStartingRangeChange = ({
+    target: { value },
+  }: ChangeEvent<HTMLInputElement>) => {
+    // move this logic to a helper func -> inputValueConverter
+    if (value === '$') {
+      setStartingRange(0);
+    }
 
-    setAmount(+newValue.toFixed(2));
+    const numericValue = value.replace(/,/g, '');
+    const valueWithoutCommas = value.length > 1 ? numericValue.slice(1) : numericValue;
+    const parsedValue = parseFloat(valueWithoutCommas);
 
-    // onChange(newValue, (100 * newValue) / amount);
+    if (!Number.isNaN(parsedValue)) {
+      setStartingRange(parsedValue);
+    }
   };
 
-  const onStartingRangeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setStartingRange(parseInt(event.target.value));
+  const formattedStartingRange = useMemo(() => {
+    return startingRange !== undefined &&
+      !Number.isNaN(startingRange) &&
+      startingRange !== 0
+      ? dollarInputConverter.format(startingRange)
+      : '';
+  }, [startingRange]);
+
+  const onEndingRangeChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+    if (value === '$') {
+      setEndingRange(0);
+    }
+
+    const numericValue = value.replace(/,/g, '');
+    const valueWithoutCommas = value.length > 1 ? numericValue.slice(1) : numericValue;
+    const parsedValue = parseFloat(valueWithoutCommas);
+
+    if (!Number.isNaN(parsedValue)) {
+      setEndingRange(parsedValue);
+    }
   };
 
-  const onEndingRangeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setEndingRange(parseInt(event.target.value));
-  };
+  const formattedEndingRange = useMemo(() => {
+    return endingRange !== undefined && !Number.isNaN(endingRange) && endingRange !== 0
+      ? dollarInputConverter.format(endingRange)
+      : '';
+  }, [endingRange]);
 
   const onReset = () => {
     setAmount(0);
@@ -90,45 +120,42 @@ export const Order: FC = () => {
   }, [orders]);
 
   const onNormalOrder = async () => {
-    const orderDTOs = [...orders.entries()].map(
-      ([price, { takeProfit, stopLoss }], index) => {
-        const orderObj = {
-          category,
-          symbol,
-          orderType,
-          side: isSell ? 'Sell' : 'Buy',
-          qty: (amount / quantity / price).toFixed(5),
-          price: price.toString(),
-          stopLoss: stopLoss?.toString(),
-          takeProfit: takeProfit?.toString(),
-          positionIdx: isSell ? 2 : 1,
-          orderLinkId: Math.random() * 100 + 10 + 'cap-order-x1' + index,
-        } as TradeOrder;
-
-        return orderObj;
-      },
+    await placeOrders(
+      [...orders.entries()].map(
+        ([price, { takeProfit, stopLoss }], index) =>
+          ({
+            category,
+            symbol,
+            orderType,
+            side: isSell ? 'Sell' : 'Buy',
+            qty: (amount / quantity / price).toFixed(5),
+            price: price.toString(),
+            stopLoss: stopLoss?.toString(),
+            takeProfit: takeProfit?.toString(),
+            positionIdx: isSell ? 2 : 1,
+            orderLinkId: Math.random() * 100 + 10 + 'cap-order-x1' + index,
+          } as TradeOrder),
+      ),
     );
-
-    await placeOrders(orderDTOs);
     setOrders(new Map());
     onReset();
   };
 
   return (
-    <div className='p-6 h-full w-full flex flex-col grid-container'>
+    <div className='flex flex-col w-full h-full p-6 grid-container'>
       <div className='self-end'>
         <BTC />
       </div>
-      <div className='flex flex-row justify-between items-center self-start'>
-        <section className='flex flex-row justify-center items-center gap-12'>
-          <div className='flex flex-col justify-center items-center gap-6 self-baseline'>
+      <div className='flex flex-row items-center self-start justify-between'>
+        <section className='flex flex-row items-center justify-center gap-12'>
+          <div className='flex flex-col items-center justify-center gap-6 self-baseline'>
             <div className='flex flex-row gap-4'>
               <p>Side: {isSell ? 'Sell' : 'Buy'}</p>
               <ToggleSwitch state={isSell} onChange={setSell} />
             </div>
 
-            <div className='flex flex-row justify-center items-center gap-3 '>
-              <label htmlFor='quantity' className='block text-white-700 mb-2'>
+            <div className='flex flex-row items-center justify-center gap-3 '>
+              <label htmlFor='quantity' className='block mb-2 text-white-700'>
                 Grid Quantity:
               </label>
 
@@ -137,12 +164,12 @@ export const Order: FC = () => {
                 id='quantity'
                 value={quantity}
                 onChange={onQuantityChange}
-                className='border border-white-300 rounded text-center py-2 mb-2 w-16'
+                className='w-16 py-2 mb-2 text-center border rounded border-white-300'
               />
             </div>
 
-            <section className='flex flex-row justify-start align-middle p-4  gap-2'>
-              <p className='text-center mr-3 mt-1'>
+            <section className='flex flex-row justify-start gap-2 p-4 align-middle'>
+              <p className='mt-1 mr-3 text-center'>
                 TP/SL: {isPercent ? 'Percentage' : 'Numerical'}
               </p>
               <ToggleSwitch
@@ -159,33 +186,33 @@ export const Order: FC = () => {
               !!boundaries?.length && !Number.isNaN(totalAverage) ? 'self-baseline' : ''
             }`}
           >
-            <div className='flex flex-row justify-center items-center gap-2'>
-              <label htmlFor='range' className='block h-full text-white-700 text-center'>
+            <div className='flex flex-row items-center justify-center gap-2'>
+              <label htmlFor='range' className='block h-full text-center text-white-700'>
                 Range :
               </label>
 
               <input
-                type='number'
+                type='text'
                 id='range'
                 placeholder='From'
-                value={startingRange ?? ''}
+                value={formattedStartingRange}
                 onChange={onStartingRangeChange}
-                className='border border-white-300 rounded px-3 py-2 w-32 text-center'
+                className='w-32 px-3 py-2 text-center border rounded border-white-300'
               />
 
               <p className='h-full'> - </p>
 
               <input
-                type='number'
+                type='text'
                 id='second_range'
                 placeholder='To'
-                value={endingRange ?? ''}
+                value={formattedEndingRange}
                 onChange={onEndingRangeChange}
-                className='border border-white-300 rounded px-3 py-2  w-32 text-center'
+                className='w-32 px-3 py-2 text-center border rounded border-white-300'
               />
             </div>
 
-            <div className='flex flex-col justify-center align-middle gap-3 ml-16'>
+            <div className='flex flex-col justify-center gap-3 ml-16 align-middle'>
               {!!boundaries?.length && (
                 <p id='boundaries' className='text-center'>
                   Boundaries:{' ['}
@@ -225,7 +252,7 @@ export const Order: FC = () => {
         )}
       </div>
 
-      <section className='flex flex-row items-center justify-around p-4 gap-4'>
+      <section className='flex flex-row items-center justify-around gap-4 p-4'>
         <div className='flex flex-row items-center justify-center gap-2'>
           <button
             type='submit'
@@ -238,17 +265,17 @@ export const Order: FC = () => {
           </button>
         </div>
 
-        <div className='flex flex-row justify-center items-center gap-4'>
+        <div className='flex flex-row items-center justify-center gap-4'>
           <div>
             <p className={'text-green-500 hover:text-green-600 font-bold py-1 px-2'}>
-              Profit: {((totalProfitPercent * amount) / quantity / 100).toFixed(2)}$
+              Profit: {<Dollar amount={(totalProfitPercent * amount) / quantity / 100} />}
             </p>
             <p className={'text-green-500 hover:text-green-600 font-bold py-1 px-2'}>
               Profit Percent: {(totalProfitPercent / quantity).toFixed(2)}%
             </p>
 
             <p className={'text-red-500 hover:text-red-600 font-bold py-1 px-2'}>
-              Loss: {((totalLossPercent * amount) / quantity / 100).toFixed(2)}$
+              Loss: {<Dollar amount={(totalLossPercent * amount) / quantity / 100} />}
             </p>
             <p className={'text-red-500 hover:text-red-600 font-bold py-1 px-2'}>
               Loss Percent: {(totalLossPercent / quantity).toFixed(2)}%
