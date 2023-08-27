@@ -1,11 +1,13 @@
 import { BTC } from '@/components/btc';
-import { Dollar } from '@/components/dollor';
+import ReactModal from 'react-modal';
+
+import { Dollar } from '@/components/dollar';
 import ToggleSwitch from '@/components/toggle-switch';
 import { dollarInputConverter } from '@/helpers/converts.helper';
-import { TradeOrder, placeOrders } from '@/pages/api/bybit';
+import { TradeOrder } from '@/pages/api/bybit';
 import useGridStore from '@/stores/grid-store';
 import useRangeSelectorStore from '@/stores/range-selector.store';
-import { ChangeEvent, FC, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FC, useEffect, useMemo, useRef, useState } from 'react';
 import { AmountSelector } from './components/amount-selector';
 import { OrderForm } from './components/order-form';
 import { calculateAverage, generateBoundaries } from './order.helper';
@@ -120,26 +122,33 @@ export const Order: FC = () => {
   }, [orders]);
 
   const onNormalOrder = async () => {
-    await placeOrders(
-      [...orders.entries()].map(
-        ([price, { takeProfit, stopLoss }], index) =>
-          ({
-            category,
-            symbol,
-            orderType,
-            side: isSell ? 'Sell' : 'Buy',
-            qty: (amount / quantity / price).toFixed(5),
-            price: price.toString(),
-            stopLoss: stopLoss?.toString(),
-            takeProfit: takeProfit?.toString(),
-            positionIdx: isSell ? 2 : 1,
-            orderLinkId: Math.random() * 100 + 10 + 'cap-order-x1' + index,
-          } as TradeOrder),
-      ),
+    console.log('mapping the orders and then opening the modal');
+    mappedOrders.current = [...orders.entries()].map(
+      ([price, { takeProfit, stopLoss }], index) =>
+        ({
+          category,
+          symbol,
+          orderType,
+          side: isSell ? 'Sell' : 'Buy',
+          qty: (amount / quantity / price).toFixed(5),
+          price: price.toString(),
+          stopLoss: stopLoss?.toString(),
+          takeProfit: takeProfit?.toString(),
+          positionIdx: isSell ? 2 : 1,
+          orderLinkId: Math.random() * 100 + 10 + 'cap-order-x1' + index,
+        } as TradeOrder),
     );
-    setOrders(new Map());
-    onReset();
+
+    setOpen(true);
+
+    // await placeOrders(mappedOrders.current);
+    // setOrders(new Map());
+    // onReset();
   };
+
+  const [isOpen, setOpen] = useState<boolean>(false);
+
+  const mappedOrders = useRef<TradeOrder[]>([]);
 
   return (
     <div className='flex flex-col w-full h-full p-6 grid-container'>
@@ -283,6 +292,56 @@ export const Order: FC = () => {
           </div>
         </div>
       </section>
+
+      <ReactModal isOpen={isOpen}>
+        <div className='flex flex-col justify-center w-full h-full align-middle gap-10'>
+          <div className='flex flex-row justify-center align-middle gap-10'>
+            {mappedOrders.current.map(
+              (
+                { orderType, category, price, qty, side, stopLoss, takeProfit, symbol },
+                index,
+              ) => (
+                <div key={index}>
+                  <p className='font-bold'>Order {`#${index + 1}:`}</p>
+                  <br></br>
+                  <p>
+                    TP:
+                    {` ${takeProfit} (${Math.abs(
+                      ((+takeProfit - +price) * 100) / +price,
+                    )}%)`}
+                  </p>
+                  <p>
+                    SL:
+                    {` ${stopLoss} (${Math.abs(((+stopLoss - +price) * 100) / +price)}%)`}
+                  </p>
+                  <p>Symbol: {symbol}</p>
+                  <p>Category: {category}</p>
+                  <p>Price: {price}</p>
+                  <p>Quantity: {qty}</p>
+                  <p>Order Type: {orderType}</p>
+                  <p>
+                    Side:
+                    <span
+                      className={`${side !== 'Sell' ? 'text-green-500' : 'text-red-600'}`}
+                    >
+                      {` ${side}`}
+                    </span>
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+
+          <div className='w-full flex flex-row justify-center align-middle'>
+            <button
+              className='w-48 px-4 py-2 font-bold text-white bg-green-500 rounded hover:bg-green-600'
+              onClick={() => setOpen(false)}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </ReactModal>
     </div>
   );
 };
