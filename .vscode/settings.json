@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["BTCUSDT", "SLTP"],
+  "cSpell.words": ["BTCUSDT", "bybit", "SLTP"],
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
