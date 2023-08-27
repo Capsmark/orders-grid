@@ -10,8 +10,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 import crypto from 'crypto';
 
 const url = 'https://api.bybit.com';
-const apiKey = 'dKGtfNOCf9Jl1ChzFg';
-const secret = 'K8lfltYmQf7o2WxXjeQZpJW0sv38GOnQJA1W';
+const apiKey = 'BMGPQCEYPFBRXMDLJR';
+const secret = 'XHCFUYTQQXZBHJKDVXWFHTSLSUOMGEWVDVXW';
 const recvWindow = 10000;
 const d = new Date();
 const timestamp = Date.UTC(d.getUTCFullYear(), d.getUTCMonth()).toString();
