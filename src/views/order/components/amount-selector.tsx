@@ -1,4 +1,4 @@
-import { Dollar } from '@/components/dollor';
+import { Dollar } from '@/components/dollar';
 import RangeSelector from '@/components/range-selector';
 import { dollarInputConverter, isNumber } from '@/helpers/converts.helper';
 import useExchangeStore from '@/stores/exchange-store';
