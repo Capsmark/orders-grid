@@ -1,5 +1,8 @@
+import withAuth from '@/components/withAuth';
 import { Order } from '@/views/order/order';
 
-export default function OrderPage() {
+function OrderPage() {
   return <Order />;
 }
+
+export default withAuth(OrderPage);

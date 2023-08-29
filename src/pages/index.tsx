@@ -1,5 +1,8 @@
+import withAuth from '@/components/withAuth';
 import { Dashboard } from '@/views/dashboard/dashboard';
 
-export default function Home() {
+function Home() {
   return <Dashboard />;
 }
+
+export default withAuth(Home);
